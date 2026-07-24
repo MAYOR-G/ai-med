@@ -154,7 +154,7 @@ Railway usually detects Python (FastAPI) automatically via the `pyproject.toml` 
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port $PORT
    ```
-4. Railway will automatically generate a public domain (e.g., `https://ai-med-production.up.railway.app`). Copy this URL.
+4. To get your public URL, go to the **Settings** tab and scroll down to **Networking**. Under **Public Networking**, click the **Generate Domain** button. Railway will create a public URL for you (e.g., `https://ai-med-production.up.railway.app`). Copy this URL!
 
 ---
 
