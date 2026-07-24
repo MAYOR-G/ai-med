@@ -16,10 +16,19 @@ SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSe
 
 
 async def init_db() -> None:
+    print(f"Starting database initialization...")
+    print(f"Database URL scheme: {db_url.split('://')[0]}")
     if settings.database_url.startswith("sqlite"):
         Path("data").mkdir(parents=True, exist_ok=True)
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+    try:
+        print("Attempting to connect to database and run migrations...")
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        print("Database initialization successful!")
+    except Exception as e:
+        print(f"CRITICAL ERROR connecting to database: {e}")
+        # Re-raise so the app still crashes, but now we have the exact error in the logs!
+        raise
 
 
 async def get_db():
