@@ -6,7 +6,12 @@ from app.core.config import get_settings
 from app.db.models import Base
 
 settings = get_settings()
-engine = create_async_engine(settings.database_url, future=True)
+
+db_url = settings.database_url
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+engine = create_async_engine(db_url, future=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
