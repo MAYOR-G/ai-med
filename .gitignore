@@ -1,0 +1,13 @@
+.env
+.venv/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+backend/data/
+backend/storage/
+backend/chroma_data/
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
+*.pyc
