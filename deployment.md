@@ -48,8 +48,80 @@ Before deploying, your code needs to be on GitHub. Vercel and Railway will autom
 
 ### 2.4 Configure Database Schema
 1. On the left sidebar, click **SQL Editor**.
-2. Create a new query and run the SQL needed to generate your tables (users, documents, etc.). You can dump this from your local SQLite or use Alembic migrations.
+2. Click **New Query** and paste the following SQL script to create your tables (matching the backend SQLAlchemy models):
 
+```sql
+-- 1. Users Table
+CREATE TABLE public.users (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    email VARCHAR(320) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_login_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX idx_users_email ON public.users(email);
+
+-- 2. Documents Table
+CREATE TABLE public.documents (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(120) NOT NULL,
+    file_size INTEGER NOT NULL,
+    checksum VARCHAR(64) NOT NULL,
+    category VARCHAR(80) NOT NULL DEFAULT 'Other',
+    document_date DATE,
+    page_count INTEGER,
+    storage_path VARCHAR(500) NOT NULL,
+    summary TEXT,
+    processing_status VARCHAR(30) NOT NULL DEFAULT 'UPLOADED',
+    processing_error TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT uq_user_document_checksum UNIQUE (user_id, checksum)
+);
+CREATE INDEX idx_documents_user_id ON public.documents(user_id);
+CREATE INDEX idx_documents_checksum ON public.documents(checksum);
+
+-- 3. Document Pages Table
+CREATE TABLE public.document_pages (
+    id VARCHAR(36) PRIMARY KEY,
+    document_id VARCHAR(36) NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+    page_number INTEGER NOT NULL,
+    extracted_text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_document_pages_document_id ON public.document_pages(document_id);
+
+-- 4. Conversations Table
+CREATE TABLE public.conversations (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    title VARCHAR(180) NOT NULL DEFAULT 'New conversation',
+    scope_document_id VARCHAR(36) REFERENCES public.documents(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_conversations_user_id ON public.conversations(user_id);
+
+-- 5. Messages Table
+CREATE TABLE public.messages (
+    id VARCHAR(36) PRIMARY KEY,
+    conversation_id VARCHAR(36) NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    citations_json TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'completed',
+    model_name VARCHAR(120),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_messages_conversation_id ON public.messages(conversation_id);
+```
+3. Click **Run** to execute the query and initialize your schema.
 ---
 
 ## Step 3: Railway (Backend Deployment)
